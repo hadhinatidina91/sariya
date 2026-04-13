@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Najwafarm - Pro Laporan</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root { 
+            --primary: #F59E0B; --bg: #0F172A; --card: #1E293B; 
+            --text: #F1F5F9; --green: #10B981; --red: #EF4444; 
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; overflow-x: hidden; }
+        
+        .admin-trigger { 
+            position: fixed; bottom: 20px; right: 20px; 
+            background: var(--primary); color: #0F172A; 
+            border: none; padding: 15px 25px; 
+            border-radius: 50px; cursor: pointer; z-index: 1000; 
+            font-size: 14px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .admin-panel { 
+            display: none; position: fixed; inset: 0; 
+            background: rgba(15, 23, 42, 0.98); z-index: 2000; 
+            padding: 15px; overflow-y: auto; 
+        }
+        .panel-content { 
+            max-width: 500px; margin: 10px auto; 
+            background: var(--card); padding: 25px; 
+            border-radius: 15px; border: 1px solid var(--primary); 
+        }
+
+        .main-display { width: 100%; max-width: 100%; margin: 0 auto; padding: 20px 10px; box-sizing: border-box; }
+        h1 { color: var(--primary); font-size: 1.5rem; margin-bottom: 5px; }
+        .month-label { font-size: 12px; color: #94A3B8; margin-bottom: 20px; text-transform: uppercase; }
+
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px; }
+        .stat-box { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid #334155; }
+        .stat-box h4 { margin: 0; font-size: 0.65rem; color: #94A3B8; text-transform: uppercase; }
+        .val { font-size: 1.1rem; font-weight: bold; display: block; margin-top: 5px; white-space: nowrap; }
+
+        .table-container { background: var(--card); border-radius: 12px; overflow-x: auto; border: 1px solid #334155; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; min-width: 480px; }
+        th { background: #334155; padding: 12px; color: #94A3B8; text-align: left; }
+        td { padding: 15px 10px; border-bottom: 1px solid #0F172A; vertical-align: top; }
+        
+        .sub-info { font-size: 0.68rem; color: #94A3B8; display: block; margin-top: 3px; }
+        .ket-text { color: var(--primary); font-style: italic; font-size: 0.75rem; display: block; margin-top: 2px; }
+        .txt-red { color: var(--red); }
+        .txt-green { color: var(--green); }
+        .badge { font-size: 9px; padding: 2px 5px; border-radius: 4px; background: #334155; color: #F1F5F9; }
+
+        label { font-size: 11px; color: #94A3B8; margin-top: 12px; display: block; font-weight: bold; }
+        input { 
+            width: 100%; padding: 12px; margin-top: 5px; 
+            border-radius: 8px; border: 1px solid #475569; 
+            background: #0F172A; color: white; box-sizing: border-box; 
+        }
+        .btn-save { 
+            background: var(--primary); border: none; padding: 15px; 
+            width: 100%; border-radius: 10px; font-weight: bold; 
+            margin-top: 25px; cursor: pointer; color: #0F172A;
+        }
+    </style>
+</head>
+<body>
+
+    <button class="admin-trigger" onclick="aksesPanel()">+ DATA BARU</button>
+
+    <div id="adminPanel" class="admin-panel">
+        <div class="panel-content">
+            <button style="float:right; color:var(--red); background:none; border:none; font-weight:bold;" onclick="toggleAdmin()">TUTUP</button>
+            <h3 style="color: var(--primary); margin-top: 0;">Input Transaksi</h3>
+            
+            <label>Tanggal</label>
+            <input type="date" id="tgl">
+
+            <label>Keterangan / Nama Barang / Nama Pegawai</label>
+            <input type="text" id="ket" placeholder="Misal: Pakan Toko Maju / Gaji Budi">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div style="grid-column: span 2; color: var(--red); font-size: 11px; margin-top: 15px; border-bottom: 1px solid #334155;">📉 PENGELUARAN</div>
+                <div><label>Pakan (Rp)</label><input type="text" id="pakan" placeholder="0"></div>
+                <div><label>Gaji/Lain (Rp)</label><input type="text" id="gaji" placeholder="0"></div>
+
+                <div style="grid-column: span 2; color: var(--primary); font-size: 11px; margin-top: 15px; border-bottom: 1px solid #334155;">🥚 TELUR SUPER</div>
+                <div><label>Jumlah (Kg)</label><input type="number" step="0.01" id="kg_s" placeholder="0"></div>
+                <div><label>Harga Jual /Kg</label><input type="text" id="hrg_s" placeholder="0"></div>
+
+                <div style="grid-column: span 2; color: #FFF; font-size: 11px; margin-top: 15px; border-bottom: 1px solid #334155;">🥚 TELUR PUTIH</div>
+                <div><label>Jumlah (Kg)</label><input type="number" step="0.01" id="kg_p" placeholder="0"></div>
+                <div><label>Harga Jual /Kg</label><input type="text" id="hrg_p" placeholder="0"></div>
+            </div>
+
+            <button class="btn-save" onclick="simpanKeFirebase()">SIMPAN KE CLOUD</button>
+        </div>
+    </div>
+
+    <div class="main-display">
+        <h1>Najwafarm 🐔</h1>
+        <div id="currentMonth" class="month-label">Memuat...</div>
+
+        <div class="dashboard">
+            <div class="stat-box">
+                <h4>Total Omset</h4>
+                <span id="pub-masuk" class="val txt-green">Rp 0</span>
+            </div>
+            <div class="stat-box">
+                <h4>Total Biaya</h4>
+                <span id="pub-keluar" class="val txt-red">Rp 0</span>
+            </div>
+            <div class="stat-box" style="grid-column: span 2; border: 1px solid var(--primary);">
+                <h4>Laba Bersih Bulan Ini</h4>
+                <span id="pub-laba" class="val">Rp 0</span>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tgl / Ket</th>
+                        <th>Rincian Biaya</th>
+                        <th>Penjualan & Laba</th>
+                        <th>Opsi</th>
+                    </tr>
+                </thead>
+                <tbody id="pub-tabel"></tbody>
+            </table>
+        </div>
+    </div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDbwSAS7uZ-TVZlSn97WP9sNU3JXYQeMvA",
+        authDomain: "najwafarm-dd1be.firebaseapp.com",
+        databaseURL: "https://najwafarm-dd1be-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "najwafarm-dd1be",
+        storageBucket: "najwafarm-dd1be.appspot.com",
+        messagingSenderId: "1033743274448",
+        appId: "1:1033743274448:web:6ad64eff21baaadc5369d5"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const { ServerValue } = firebase.database;
+
+    // LOGIN SESSION
+    let is_admin = false;
+
+    function aksesPanel() {
+        if (is_admin) {
+            toggleAdmin();
+        } else {
+            const pass = prompt("Masukkan PIN Admin:");
+            if (pass === "9999") {
+                is_admin = true;
+                toggleAdmin();
+            } else {
+                alert("PIN Salah!");
+            }
+        }
+    }
+
+    function toggleAdmin() {
+        const p = document.getElementById('adminPanel');
+        p.style.display = p.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function formatRp(n) { return "Rp " + Number(n).toLocaleString('id-ID'); }
+
+    // --- FITUR FORMAT TITIK OTOMATIS ---
+    function formatRupiahKetik(angka) {
+        let number_string = angka.replace(/[^,\d]/g, '').toString(),
+            split = number_string.split(','),
+            sisa = split[0].length % 3,
+            rupiah = split[0].substr(0, sisa),
+            ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+        if (ribuan) {
+            let separator = sisa ? '.' : '';
+            rupiah += separator + ribuan.join('.');
+        }
+        return split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+    }
+
+    const inputUang = ['pakan', 'gaji', 'hrg_s', 'hrg_p'];
+    inputUang.forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener('keyup', function() {
+            this.value = formatRupiahKetik(this.value);
+        });
+    });
+
+    function bersihAngka(str) {
+        return parseFloat(str.replace(/\./g, '')) || 0;
+    }
+    // ----------------------------------
+
+    function simpanKeFirebase() {
+        const tgl = document.getElementById('tgl').value;
+        if(!tgl) return alert("Pilih tanggal!");
+
+        const payload = {
+            tgl: tgl,
+            ket: document.getElementById('ket').value || "Tanpa Keterangan",
+            pakan: bersihAngka(document.getElementById('pakan').value),
+            gaji: bersihAngka(document.getElementById('gaji').value),
+            kg_s: parseFloat(document.getElementById('kg_s').value) || 0,
+            hrg_s: bersihAngka(document.getElementById('hrg_s').value),
+            kg_p: parseFloat(document.getElementById('kg_p').value) || 0,
+            hrg_p: bersihAngka(document.getElementById('hrg_p').value),
+            ts: ServerValue.TIMESTAMP
+        };
+
+        database.ref('ternak_laporan').push(payload).then(() => {
+            alert("Berhasil disimpan!");
+            toggleAdmin();
+            ['ket','pakan','gaji','kg_s','hrg_s','kg_p','hrg_p'].forEach(id => document.getElementById(id).value = "");
+        });
+    }
+
+    function hapusData(id) {
+        if(confirm("Hapus transaksi ini secara permanen?")) {
+            database.ref('ternak_laporan/' + id).remove();
+        }
+    }
+
+    const skrg = new Date();
+    const filterBulan = `${skrg.getFullYear()}-${(skrg.getMonth() + 1).toString().padStart(2, '0')}`;
+    document.getElementById('currentMonth').textContent = skrg.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+    document.getElementById('tgl').valueAsDate = skrg;
+
+    database.ref('ternak_laporan').on('value', (snapshot) => {
+        const allData = snapshot.val();
+        const tbody = document.getElementById('pub-tabel');
+        tbody.innerHTML = "";
+        let tM = 0, tK = 0;
+
+        if (allData) {
+            const sorted = Object.entries(allData).sort((a, b) => b[1].tgl.localeCompare(a[1].tgl));
+
+            sorted.forEach(([id, item]) => {
+                if (item.tgl.startsWith(filterBulan)) {
+                    const biaya = (item.pakan || 0) + (item.gaji || 0);
+                    const omset = ((item.kg_s || 0) * (item.hrg_s || 0)) + ((item.kg_p || 0) * (item.hrg_p || 0));
+                    const laba = omset - biaya;
+                    
+                    tM += omset; tK += biaya;
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>
+                                <b>${item.tgl.split('-').reverse().join('/')}</b>
+                                <span class="ket-text">${item.ket}</span>
+                            </td>
+                            <td>
+                                <span class="txt-red" style="font-weight:bold">${formatRp(biaya)}</span>
+                                ${item.pakan > 0 ? `<span class="sub-info">🔸 Pakan: ${formatRp(item.pakan)}</span>` : ''}
+                                ${item.gaji > 0 ? `<span class="sub-info">🔸 Gaji/Lain: ${formatRp(item.gaji)}</span>` : ''}
+                            </td>
+                            <td>
+                                <span class="txt-green" style="font-weight:bold">${formatRp(omset)}</span>
+                                ${item.kg_s > 0 ? `<span class="sub-info"><span class="badge">Super</span> ${item.kg_s}kg x ${item.hrg_s/1000}rb</span>` : ''}
+                                ${item.kg_p > 0 ? `<span class="sub-info"><span class="badge">Putih</span> ${item.kg_p}kg x ${item.hrg_p/1000}rb</span>` : ''}
+                                <div style="margin-top:5px; border-top:1px solid #334155; padding-top:3px; color:${laba>=0?'var(--green)':'var(--red)'}; font-weight:bold">
+                                    Laba: ${formatRp(laba)}
+                                </div>
+                            </td>
+                            <td style="text-align:center">
+                                ${is_admin ? `<button onclick="hapusData('${id}')" style="background:none; border:none; color:var(--red); font-size:18px; cursor:pointer">✖</button>` : '🔒'}
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+        }
+
+        document.getElementById('pub-masuk').textContent = formatRp(tM);
+        document.getElementById('pub-keluar').textContent = formatRp(tK);
+        document.getElementById('pub-laba').textContent = formatRp(tM - tK);
+        document.getElementById('pub-laba').className = 'val ' + ((tM-tK) >= 0 ? 'txt-green' : 'txt-red');
+    });
+</script>
+</body>
+</html>
