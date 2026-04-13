@@ -10,7 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
-        :root { --primary:#F59E0B;--bg:#0F172A;--card:#1E293B;--text:#F1F5F9;--green:#10B981;--red:#EF4444;--blue:#3B82F6; }
+        :root{--primary:#F59E0B;--bg:#0F172A;--card:#1E293B;--text:#F1F5F9;--green:#10B981;--red:#EF4444;--blue:#3B82F6;}
         *{box-sizing:border-box;}
         body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);margin:0;padding:0;overflow-x:hidden;}
         .tabs{display:flex;background:#1E293B;border-bottom:2px solid #334155;overflow-x:auto;}
@@ -61,6 +61,19 @@
         .kes-mati{background:#64748B20;color:#94A3B8;}
         .kes-obat{background:#10B98120;color:#10B981;}
         .notif-banner{background:linear-gradient(135deg,#10B981,#059669);color:white;padding:12px 15px;border-radius:10px;margin-bottom:15px;font-weight:bold;font-size:13px;display:none;text-align:center;}
+
+        /* SEARCH BOX */
+        .search-card{background:var(--card);border-radius:12px;padding:15px;border:1px solid var(--primary);margin-bottom:20px;}
+        .search-card h4{margin:0 0 12px 0;font-size:12px;color:var(--primary);text-transform:uppercase;}
+        .search-row{display:flex;gap:8px;align-items:flex-end;}
+        .search-row input{flex:1;margin-top:0;}
+        .btn-cari{background:var(--primary);border:none;padding:12px 16px;border-radius:8px;color:#0F172A;font-weight:bold;cursor:pointer;white-space:nowrap;font-size:13px;}
+        .result-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+        .result-item{background:#0F172A;border-radius:8px;padding:10px;border:1px solid #334155;}
+        .result-item small{font-size:10px;color:#94A3B8;text-transform:uppercase;display:block;}
+        .result-item b{font-size:14px;display:block;margin-top:3px;}
+        .result-full{grid-column:span 2;text-align:center;background:var(--primary)20;border:1px solid var(--primary);}
+        .no-result{color:#94A3B8;font-size:12px;text-align:center;padding:10px;display:none;}
     </style>
 </head>
 <body>
@@ -80,13 +93,21 @@
             <option value="Kandang 2">Kandang 2</option>
             <option value="Kandang 3">Kandang 3</option>
         </select>
-        <label>Keterangan / Nama Barang / Nama Pegawai</label>
+        <label>Keterangan</label>
         <input type="text" id="ket" placeholder="Misal: Pakan Toko Maju / Gaji Budi">
+
+        <!-- PENGELUARAN -->
         <div class="form-section" style="color:var(--red)">📉 PENGELUARAN</div>
         <div class="form-grid">
             <div><label>Pakan (Rp)</label><input type="text" id="pakan" placeholder="0"></div>
-            <div><label>Gaji/Lain (Rp)</label><input type="text" id="gaji" placeholder="0"></div>
+            <div><label>Gaji (Rp)</label><input type="text" id="gaji" placeholder="0"></div>
         </div>
+        <label>Pengeluaran Lain-lain (Rp)</label>
+        <input type="text" id="keluar_lain" placeholder="Contoh: Beli obat, bensin, listrik...">
+        <label>Keterangan Pengeluaran Lain</label>
+        <input type="text" id="keluar_lain_ket" placeholder="Misal: Beli obat ayam, bayar listrik">
+
+        <!-- TELUR -->
         <div class="form-section" style="color:var(--primary)">🥚 TELUR SUPER</div>
         <div class="form-grid">
             <div><label>Jumlah (Kg)</label><input type="number" step="0.01" id="kg_s" placeholder="0"></div>
@@ -97,6 +118,14 @@
             <div><label>Jumlah (Kg)</label><input type="number" step="0.01" id="kg_p" placeholder="0"></div>
             <div><label>Harga Jual /Kg</label><input type="text" id="hrg_p" placeholder="0"></div>
         </div>
+
+        <!-- PEMASUKAN LAIN -->
+        <div class="form-section" style="color:var(--green)">💰 PEMASUKAN LAIN</div>
+        <label>Nominal Pemasukan Lain (Rp)</label>
+        <input type="text" id="masuk_lain" placeholder="Contoh: Jual karung, ayam afkir...">
+        <label>Keterangan Pemasukan Lain</label>
+        <input type="text" id="masuk_lain_ket" placeholder="Misal: Jual ayam afkir, jual pupuk">
+
         <button class="btn-save" onclick="simpanData()">💾 SIMPAN KE CLOUD</button>
         <button class="btn-cancel" onclick="tutupPanel()">BATAL</button>
     </div>
@@ -166,9 +195,10 @@
 <!-- TABS -->
 <div class="tabs">
     <button class="tab-btn active" onclick="gotoTab('laporan',this)">📊 Laporan</button>
+    <button class="tab-btn" onclick="gotoTab('cari',this)">🔍 Cari</button>
     <button class="tab-btn" onclick="gotoTab('grafik',this)">📈 Grafik</button>
     <button class="tab-btn" onclick="gotoTab('stok',this)">🌾 Stok</button>
-    <button class="tab-btn" onclick="gotoTab('kesehatan',this)">🐔 Kesehatan</button>
+    <button class="tab-btn" onclick="gotoTab('kesehatan',this)">🐔 Sehat</button>
 </div>
 
 <!-- TAB LAPORAN -->
@@ -197,6 +227,14 @@
             <span id="pub-kg-putih" class="val">0 Kg</span>
             <span id="pub-butir-putih" class="val-sub">≈ 0 butir</span>
         </div>
+        <div class="stat-box" style="border:1px solid var(--green)">
+            <h4>💰 Pemasukan Lain</h4>
+            <span id="pub-masuk-lain" class="val txt-green">Rp 0</span>
+        </div>
+        <div class="stat-box" style="border:1px solid var(--red)">
+            <h4>💸 Pengeluaran Lain</h4>
+            <span id="pub-keluar-lain" class="val txt-red">Rp 0</span>
+        </div>
         <div class="stat-box" style="grid-column:span 2;border:1px solid var(--primary)">
             <h4>💰 Laba Bersih <span id="target-label" style="float:right;cursor:pointer;color:var(--blue);font-weight:normal" onclick="bukaTarget()">🎯 Set Target</span></h4>
             <span id="pub-laba" class="val">Rp 0</span>
@@ -206,9 +244,99 @@
     </div>
     <div class="table-container">
         <table>
-            <thead><tr><th>Tgl / Ket</th><th>Rincian Biaya</th><th>Penjualan & Laba</th><th>Opsi</th></tr></thead>
+            <thead><tr><th>Tgl / Ket</th><th>Pengeluaran</th><th>Pemasukan & Laba</th><th>Opsi</th></tr></thead>
             <tbody id="pub-tabel"></tbody>
         </table>
+    </div>
+</div>
+
+<!-- TAB CARI -->
+<div id="tab-cari" class="tab-content">
+
+    <!-- Cari Penjualan Telur -->
+    <div class="search-card">
+        <h4>🥚 Cari Penjualan Telur Per Tanggal</h4>
+        <div class="search-row">
+            <input type="date" id="cari-tgl-telur">
+            <button class="btn-cari" onclick="cariTelur()">CEK</button>
+        </div>
+        <div id="result-telur" style="display:none">
+            <div class="result-grid">
+                <div class="result-item">
+                    <small>🥚 Telur Super</small>
+                    <b id="res-kg-super" class="txt-green">0 Kg</b>
+                    <span style="font-size:11px;color:#94A3B8" id="res-butir-super">≈ 0 butir</span>
+                </div>
+                <div class="result-item">
+                    <small>🥚 Telur Putih</small>
+                    <b id="res-kg-putih">0 Kg</b>
+                    <span style="font-size:11px;color:#94A3B8" id="res-butir-putih">≈ 0 butir</span>
+                </div>
+                <div class="result-item result-full">
+                    <small>Total Produksi Hari Ini</small>
+                    <b id="res-total-kg" style="color:var(--primary)">0 Kg</b>
+                </div>
+                <div class="result-item">
+                    <small>💰 Omset Telur</small>
+                    <b id="res-omset-telur" class="txt-green">Rp 0</b>
+                </div>
+                <div class="result-item">
+                    <small>📉 Total Biaya</small>
+                    <b id="res-biaya" class="txt-red">Rp 0</b>
+                </div>
+                <div class="result-item result-full">
+                    <small>Laba Hari Ini</small>
+                    <b id="res-laba-hari" style="color:var(--primary)">Rp 0</b>
+                </div>
+            </div>
+        </div>
+        <div id="no-result-telur" class="no-result">Tidak ada data untuk tanggal ini</div>
+    </div>
+
+    <!-- Cek Harga Telur -->
+    <div class="search-card">
+        <h4>💲 Cek Harga Telur Per Tanggal</h4>
+        <div class="search-row">
+            <input type="date" id="cari-tgl-harga">
+            <button class="btn-cari" onclick="cariHarga()">CEK</button>
+        </div>
+        <div id="result-harga" style="display:none">
+            <div class="result-grid">
+                <div class="result-item">
+                    <small>Harga Telur Super /Kg</small>
+                    <b id="res-hrg-super" class="txt-green">Rp 0</b>
+                </div>
+                <div class="result-item">
+                    <small>Harga Telur Putih /Kg</small>
+                    <b id="res-hrg-putih">Rp 0</b>
+                </div>
+            </div>
+        </div>
+        <div id="no-result-harga" class="no-result">Tidak ada data harga untuk tanggal ini</div>
+    </div>
+
+    <!-- Cari Pemasukan/Pengeluaran Lain -->
+    <div class="search-card">
+        <h4>💸 Cari Transaksi Lain Per Tanggal</h4>
+        <div class="search-row">
+            <input type="date" id="cari-tgl-lain">
+            <button class="btn-cari" onclick="cariLain()">CEK</button>
+        </div>
+        <div id="result-lain" style="display:none">
+            <div class="result-grid">
+                <div class="result-item" style="border:1px solid var(--green)20">
+                    <small>💰 Pemasukan Lain</small>
+                    <b id="res-masuk-lain" class="txt-green">Rp 0</b>
+                    <span style="font-size:11px;color:#94A3B8;display:block" id="res-masuk-lain-ket">-</span>
+                </div>
+                <div class="result-item" style="border:1px solid var(--red)20">
+                    <small>💸 Pengeluaran Lain</small>
+                    <b id="res-keluar-lain" class="txt-red">Rp 0</b>
+                    <span style="font-size:11px;color:#94A3B8;display:block" id="res-keluar-lain-ket">-</span>
+                </div>
+            </div>
+        </div>
+        <div id="no-result-lain" class="no-result">Tidak ada transaksi lain untuk tanggal ini</div>
     </div>
 </div>
 
@@ -250,7 +378,7 @@
 </div>
 
 <script>
-const firebaseConfig = {
+const firebaseConfig={
     apiKey:"AIzaSyDbwSAS7uZ-TVZlSn97WP9sNU3JXYQeMvA",
     authDomain:"najwafarm-dd1be.firebaseapp.com",
     databaseURL:"https://najwafarm-dd1be-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -260,12 +388,12 @@ const firebaseConfig = {
     appId:"1:1033743274448:web:6ad64eff21baaadc5369d5"
 };
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const {ServerValue} = firebase.database;
+const db=firebase.database();
+const {ServerValue}=firebase.database;
 
-let is_admin=false, allDataCache={}, targetLaba=0;
-let chartO=null, chartL=null, chartT=null;
-const BUTIR_PER_KG = 16;
+let is_admin=false,allDataCache={},targetLaba=0;
+let chartO=null,chartL=null,chartT=null;
+const BUTIR=16;
 
 function gotoTab(id,btn){
     document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
@@ -287,7 +415,7 @@ function aksesPanel(){if(!cekAdmin())return; bukaInputBaru();}
 function bukaInputBaru(){
     document.getElementById('panel-title').textContent='Input Transaksi Baru';
     document.getElementById('edit-id').value='';
-    ['ket','pakan','gaji','hrg_s','hrg_p'].forEach(id=>document.getElementById(id).value='');
+    ['ket','pakan','gaji','hrg_s','hrg_p','keluar_lain','keluar_lain_ket','masuk_lain','masuk_lain_ket'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('kg_s').value='';
     document.getElementById('kg_p').value='';
     document.getElementById('tgl').valueAsDate=new Date();
@@ -303,18 +431,22 @@ function bukaEdit(id,item){
     document.getElementById('tgl').value=item.tgl;
     document.getElementById('ket').value=item.ket||'';
     document.getElementById('kandang').value=item.kandang||'Kandang 1';
-    document.getElementById('pakan').value=item.pakan?formatRupiahKetik(String(item.pakan)):'';
-    document.getElementById('gaji').value=item.gaji?formatRupiahKetik(String(item.gaji)):'';
+    document.getElementById('pakan').value=item.pakan?fRK(String(item.pakan)):'';
+    document.getElementById('gaji').value=item.gaji?fRK(String(item.gaji)):'';
     document.getElementById('kg_s').value=item.kg_s||'';
-    document.getElementById('hrg_s').value=item.hrg_s?formatRupiahKetik(String(item.hrg_s)):'';
+    document.getElementById('hrg_s').value=item.hrg_s?fRK(String(item.hrg_s)):'';
     document.getElementById('kg_p').value=item.kg_p||'';
-    document.getElementById('hrg_p').value=item.hrg_p?formatRupiahKetik(String(item.hrg_p)):'';
+    document.getElementById('hrg_p').value=item.hrg_p?fRK(String(item.hrg_p)):'';
+    document.getElementById('keluar_lain').value=item.keluar_lain?fRK(String(item.keluar_lain)):'';
+    document.getElementById('keluar_lain_ket').value=item.keluar_lain_ket||'';
+    document.getElementById('masuk_lain').value=item.masuk_lain?fRK(String(item.masuk_lain)):'';
+    document.getElementById('masuk_lain_ket').value=item.masuk_lain_ket||'';
     document.getElementById('adminPanel').style.display='block';
 }
 
 function bukaTarget(){
     if(!cekAdmin())return;
-    document.getElementById('target-input').value=targetLaba>0?formatRupiahKetik(String(targetLaba)):'';
+    document.getElementById('target-input').value=targetLaba>0?fRK(String(targetLaba)):'';
     document.getElementById('targetPanel').style.display='block';
 }
 
@@ -324,17 +456,17 @@ function bukaStok(jenis){
 }
 
 function formatRp(n){return "Rp "+Number(n).toLocaleString('id-ID');}
-function formatRupiahKetik(a){
+function fRK(a){
     let s=String(a).replace(/[^,\d]/g,''),sp=s.split(','),sisa=sp[0].length%3,rp=sp[0].substr(0,sisa);
     let rb=sp[0].substr(sisa).match(/\d{3}/gi);
     if(rb){rp+=(sisa?'.':'')+rb.join('.');}
     return sp[1]!==undefined?rp+','+sp[1]:rp;
 }
-function bersihAngka(s){return parseFloat(String(s).replace(/\./g,'').replace(',','.'))||0;}
+function bersih(s){return parseFloat(String(s).replace(/\./g,'').replace(',','.'))||0;}
 
-['pakan','gaji','hrg_s','hrg_p','target-input'].forEach(id=>{
+['pakan','gaji','hrg_s','hrg_p','keluar_lain','masuk_lain','target-input'].forEach(id=>{
     const el=document.getElementById(id);
-    if(el) el.addEventListener('keyup',function(){this.value=formatRupiahKetik(this.value);});
+    if(el) el.addEventListener('keyup',function(){this.value=fRK(this.value);});
 });
 
 function simpanData(){
@@ -342,14 +474,19 @@ function simpanData(){
     if(!tgl) return alert("Pilih tanggal!");
     const editId=document.getElementById('edit-id').value;
     const payload={
-        tgl, ket:document.getElementById('ket').value||"Tanpa Keterangan",
+        tgl,
+        ket:document.getElementById('ket').value||"Tanpa Keterangan",
         kandang:document.getElementById('kandang').value,
-        pakan:bersihAngka(document.getElementById('pakan').value),
-        gaji:bersihAngka(document.getElementById('gaji').value),
+        pakan:bersih(document.getElementById('pakan').value),
+        gaji:bersih(document.getElementById('gaji').value),
         kg_s:parseFloat(document.getElementById('kg_s').value)||0,
-        hrg_s:bersihAngka(document.getElementById('hrg_s').value),
+        hrg_s:bersih(document.getElementById('hrg_s').value),
         kg_p:parseFloat(document.getElementById('kg_p').value)||0,
-        hrg_p:bersihAngka(document.getElementById('hrg_p').value),
+        hrg_p:bersih(document.getElementById('hrg_p').value),
+        keluar_lain:bersih(document.getElementById('keluar_lain').value),
+        keluar_lain_ket:document.getElementById('keluar_lain_ket').value,
+        masuk_lain:bersih(document.getElementById('masuk_lain').value),
+        masuk_lain_ket:document.getElementById('masuk_lain_ket').value,
     };
     const ref=editId?db.ref('ternak_laporan/'+editId).update(payload):db.ref('ternak_laporan').push({...payload,ts:ServerValue.TIMESTAMP});
     ref.then(()=>{alert(editId?"Data berhasil diupdate!":"Berhasil disimpan!");tutupPanel();});
@@ -357,9 +494,82 @@ function simpanData(){
 
 function hapusData(id){
     if(!is_admin){alert("Login admin dulu!");return;}
-    if(confirm("Hapus transaksi ini secara permanen?")) db.ref('ternak_laporan/'+id).remove();
+    if(confirm("Hapus transaksi ini?")) db.ref('ternak_laporan/'+id).remove();
 }
 
+// ===== FITUR PENCARIAN =====
+function cariTelur(){
+    const tgl=document.getElementById('cari-tgl-telur').value;
+    if(!tgl) return alert("Pilih tanggal!");
+    let kgS=0,kgP=0,omset=0,biaya=0,found=false;
+    Object.values(allDataCache).forEach(item=>{
+        if(item.tgl===tgl){
+            kgS+=(item.kg_s||0); kgP+=(item.kg_p||0);
+            omset+=((item.kg_s||0)*(item.hrg_s||0))+((item.kg_p||0)*(item.hrg_p||0))+(item.masuk_lain||0);
+            biaya+=(item.pakan||0)+(item.gaji||0)+(item.keluar_lain||0);
+            found=true;
+        }
+    });
+    document.getElementById('result-telur').style.display=found?'block':'none';
+    document.getElementById('no-result-telur').style.display=found?'none':'block';
+    if(found){
+        document.getElementById('res-kg-super').textContent=kgS.toFixed(2)+' Kg';
+        document.getElementById('res-butir-super').textContent='≈ '+Math.round(kgS*BUTIR)+' butir';
+        document.getElementById('res-kg-putih').textContent=kgP.toFixed(2)+' Kg';
+        document.getElementById('res-butir-putih').textContent='≈ '+Math.round(kgP*BUTIR)+' butir';
+        document.getElementById('res-total-kg').textContent=(kgS+kgP).toFixed(2)+' Kg';
+        document.getElementById('res-omset-telur').textContent=formatRp(omset);
+        document.getElementById('res-biaya').textContent=formatRp(biaya);
+        const laba=omset-biaya;
+        const el=document.getElementById('res-laba-hari');
+        el.textContent=formatRp(laba);
+        el.style.color=laba>=0?'var(--green)':'var(--red)';
+    }
+}
+
+function cariHarga(){
+    const tgl=document.getElementById('cari-tgl-harga').value;
+    if(!tgl) return alert("Pilih tanggal!");
+    let hrgS=0,hrgP=0,found=false;
+    Object.values(allDataCache).forEach(item=>{
+        if(item.tgl===tgl){
+            if(item.hrg_s>0) hrgS=item.hrg_s;
+            if(item.hrg_p>0) hrgP=item.hrg_p;
+            found=true;
+        }
+    });
+    document.getElementById('result-harga').style.display=found?'block':'none';
+    document.getElementById('no-result-harga').style.display=found?'none':'block';
+    if(found){
+        document.getElementById('res-hrg-super').textContent=formatRp(hrgS)+'/Kg';
+        document.getElementById('res-hrg-putih').textContent=formatRp(hrgP)+'/Kg';
+    }
+}
+
+function cariLain(){
+    const tgl=document.getElementById('cari-tgl-lain').value;
+    if(!tgl) return alert("Pilih tanggal!");
+    let masuk=0,keluar=0,masukKet=[],keluarKet=[],found=false;
+    Object.values(allDataCache).forEach(item=>{
+        if(item.tgl===tgl){
+            masuk+=(item.masuk_lain||0);
+            keluar+=(item.keluar_lain||0);
+            if(item.masuk_lain_ket) masukKet.push(item.masuk_lain_ket);
+            if(item.keluar_lain_ket) keluarKet.push(item.keluar_lain_ket);
+            if((item.masuk_lain||0)>0||(item.keluar_lain||0)>0) found=true;
+        }
+    });
+    document.getElementById('result-lain').style.display=found?'block':'none';
+    document.getElementById('no-result-lain').style.display=found?'none':'block';
+    if(found){
+        document.getElementById('res-masuk-lain').textContent=formatRp(masuk);
+        document.getElementById('res-masuk-lain-ket').textContent=masukKet.join(', ')||'-';
+        document.getElementById('res-keluar-lain').textContent=formatRp(keluar);
+        document.getElementById('res-keluar-lain-ket').textContent=keluarKet.join(', ')||'-';
+    }
+}
+
+// ===== FILTER & LOAD =====
 function isiFilterBulan(){
     const sel=document.getElementById('filter-bulan');
     const skrg=new Date();
@@ -378,29 +588,34 @@ function loadData(){
     document.getElementById('currentMonth').textContent=new Date(filterBln+'-01').toLocaleString('id-ID',{month:'long',year:'numeric'});
     const tbody=document.getElementById('pub-tabel');
     tbody.innerHTML="";
-    let tM=0,tK=0,tKgSuper=0,tKgPutih=0;
+    let tM=0,tK=0,tKgS=0,tKgP=0,tMasukLain=0,tKeluarLain=0;
 
     if(allDataCache&&Object.keys(allDataCache).length>0){
         const sorted=Object.entries(allDataCache).sort((a,b)=>b[1].tgl.localeCompare(a[1].tgl));
         sorted.forEach(([id,item])=>{
             if(!item.tgl||!item.tgl.startsWith(filterBln))return;
             if(filterKdg!=='semua'&&item.kandang&&item.kandang!==filterKdg)return;
-            const biaya=(item.pakan||0)+(item.gaji||0);
-            const omset=((item.kg_s||0)*(item.hrg_s||0))+((item.kg_p||0)*(item.hrg_p||0));
+            const biaya=(item.pakan||0)+(item.gaji||0)+(item.keluar_lain||0);
+            const omset=((item.kg_s||0)*(item.hrg_s||0))+((item.kg_p||0)*(item.hrg_p||0))+(item.masuk_lain||0);
             const laba=omset-biaya;
-            tM+=omset; tK+=biaya; tKgSuper+=(item.kg_s||0); tKgPutih+=(item.kg_p||0);
+            tM+=omset; tK+=biaya; tKgS+=(item.kg_s||0); tKgP+=(item.kg_p||0);
+            tMasukLain+=(item.masuk_lain||0); tKeluarLain+=(item.keluar_lain||0);
             const kBadge=item.kandang?`<span class="badge-k">${item.kandang}</span> `:'';
             const editBtn=is_admin?`<button class="btn-edit" onclick='bukaEdit("${id}",${JSON.stringify(item)})'>✏️</button>`:'';
             const delBtn=is_admin?`<button class="btn-del" onclick="hapusData('${id}')">✖</button>`:'🔒';
             tbody.innerHTML+=`<tr>
                 <td><b>${item.tgl.split('-').reverse().join('/')}</b>${kBadge}<span class="ket-text">${item.ket}</span></td>
-                <td><span class="txt-red" style="font-weight:bold">${formatRp(biaya)}</span>
+                <td>
+                    <span class="txt-red" style="font-weight:bold">${formatRp(biaya)}</span>
                     ${item.pakan>0?`<span class="sub-info">🔸 Pakan: ${formatRp(item.pakan)}</span>`:''}
-                    ${item.gaji>0?`<span class="sub-info">🔸 Gaji/Lain: ${formatRp(item.gaji)}</span>`:''}
+                    ${item.gaji>0?`<span class="sub-info">🔸 Gaji: ${formatRp(item.gaji)}</span>`:''}
+                    ${item.keluar_lain>0?`<span class="sub-info">🔸 Lain: ${formatRp(item.keluar_lain)}${item.keluar_lain_ket?' ('+item.keluar_lain_ket+')':''}</span>`:''}
                 </td>
-                <td><span class="txt-green" style="font-weight:bold">${formatRp(omset)}</span>
-                    ${item.kg_s>0?`<span class="sub-info"><span class="badge">Super</span> ${item.kg_s}kg ≈ ${Math.round(item.kg_s*BUTIR_PER_KG)} butir</span>`:''}
-                    ${item.kg_p>0?`<span class="sub-info"><span class="badge">Putih</span> ${item.kg_p}kg ≈ ${Math.round(item.kg_p*BUTIR_PER_KG)} butir</span>`:''}
+                <td>
+                    <span class="txt-green" style="font-weight:bold">${formatRp(omset)}</span>
+                    ${item.kg_s>0?`<span class="sub-info"><span class="badge">Super</span> ${item.kg_s}kg ≈ ${Math.round(item.kg_s*BUTIR)} butir</span>`:''}
+                    ${item.kg_p>0?`<span class="sub-info"><span class="badge">Putih</span> ${item.kg_p}kg ≈ ${Math.round(item.kg_p*BUTIR)} butir</span>`:''}
+                    ${item.masuk_lain>0?`<span class="sub-info">💰 Lain: ${formatRp(item.masuk_lain)}${item.masuk_lain_ket?' ('+item.masuk_lain_ket+')':''}</span>`:''}
                     <div style="margin-top:5px;border-top:1px solid #334155;padding-top:3px;color:${laba>=0?'var(--green)':'var(--red)'};font-weight:bold">Laba: ${formatRp(laba)}</div>
                 </td>
                 <td style="text-align:center;white-space:nowrap">${editBtn}${delBtn}</td>
@@ -410,10 +625,12 @@ function loadData(){
 
     document.getElementById('pub-masuk').textContent=formatRp(tM);
     document.getElementById('pub-keluar').textContent=formatRp(tK);
-    document.getElementById('pub-kg-super').textContent=tKgSuper.toFixed(1)+" Kg";
-    document.getElementById('pub-butir-super').textContent="≈ "+Math.round(tKgSuper*BUTIR_PER_KG).toLocaleString('id-ID')+" butir";
-    document.getElementById('pub-kg-putih').textContent=tKgPutih.toFixed(1)+" Kg";
-    document.getElementById('pub-butir-putih').textContent="≈ "+Math.round(tKgPutih*BUTIR_PER_KG).toLocaleString('id-ID')+" butir";
+    document.getElementById('pub-kg-super').textContent=tKgS.toFixed(1)+' Kg';
+    document.getElementById('pub-butir-super').textContent='≈ '+Math.round(tKgS*BUTIR).toLocaleString('id-ID')+' butir';
+    document.getElementById('pub-kg-putih').textContent=tKgP.toFixed(1)+' Kg';
+    document.getElementById('pub-butir-putih').textContent='≈ '+Math.round(tKgP*BUTIR).toLocaleString('id-ID')+' butir';
+    document.getElementById('pub-masuk-lain').textContent=formatRp(tMasukLain);
+    document.getElementById('pub-keluar-lain').textContent=formatRp(tKeluarLain);
     const laba=tM-tK;
     document.getElementById('pub-laba').textContent=formatRp(laba);
     document.getElementById('pub-laba').className='val '+(laba>=0?'txt-green':'txt-red');
@@ -428,7 +645,7 @@ function loadData(){
 }
 
 function simpanTarget(){
-    const val=bersihAngka(document.getElementById('target-input').value);
+    const val=bersih(document.getElementById('target-input').value);
     db.ref('settings/target_laba').set(val).then(()=>{alert("Target disimpan!");document.getElementById('targetPanel').style.display='none';});
 }
 
@@ -462,28 +679,28 @@ function hapusKesehatan(id){if(!cekAdmin())return;if(confirm("Hapus catatan ini?
 function renderCharts(){
     if(!allDataCache)return;
     const skrg=new Date();
-    const labels=[],omsetArr=[],biayaArr=[],labaArr=[],superArr=[],putihArr=[];
+    const labels=[],oArr=[],bArr=[],lArr=[],sArr=[],pArr=[];
     for(let i=29;i>=0;i--){
         const d=new Date(skrg);d.setDate(d.getDate()-i);
         const key=d.toISOString().split('T')[0];
         labels.push(key.slice(5));
-        let omset=0,biaya=0,kgS=0,kgP=0;
+        let o=0,b=0,kS=0,kP=0;
         Object.values(allDataCache).forEach(item=>{
             if(item.tgl===key){
-                omset+=((item.kg_s||0)*(item.hrg_s||0))+((item.kg_p||0)*(item.hrg_p||0));
-                biaya+=(item.pakan||0)+(item.gaji||0);
-                kgS+=(item.kg_s||0);kgP+=(item.kg_p||0);
+                o+=((item.kg_s||0)*(item.hrg_s||0))+((item.kg_p||0)*(item.hrg_p||0))+(item.masuk_lain||0);
+                b+=(item.pakan||0)+(item.gaji||0)+(item.keluar_lain||0);
+                kS+=(item.kg_s||0);kP+=(item.kg_p||0);
             }
         });
-        omsetArr.push(omset);biayaArr.push(biaya);labaArr.push(omset-biaya);superArr.push(kgS);putihArr.push(kgP);
+        oArr.push(o);bArr.push(b);lArr.push(o-b);sArr.push(kS);pArr.push(kP);
     }
     const cfg={responsive:true,plugins:{legend:{labels:{color:'#94A3B8',font:{size:10}}}},scales:{x:{ticks:{color:'#64748B',maxRotation:45,font:{size:9}}},y:{ticks:{color:'#64748B',font:{size:9}}}}};
     if(chartO)chartO.destroy();
-    chartO=new Chart(document.getElementById('chartOmset'),{type:'bar',data:{labels,datasets:[{label:'Omset',data:omsetArr,backgroundColor:'#10B98150',borderColor:'#10B981',borderWidth:1},{label:'Biaya',data:biayaArr,backgroundColor:'#EF444450',borderColor:'#EF4444',borderWidth:1}]},options:cfg});
+    chartO=new Chart(document.getElementById('chartOmset'),{type:'bar',data:{labels,datasets:[{label:'Omset',data:oArr,backgroundColor:'#10B98150',borderColor:'#10B981',borderWidth:1},{label:'Biaya',data:bArr,backgroundColor:'#EF444450',borderColor:'#EF4444',borderWidth:1}]},options:cfg});
     if(chartL)chartL.destroy();
-    chartL=new Chart(document.getElementById('chartLaba'),{type:'line',data:{labels,datasets:[{label:'Laba',data:labaArr,borderColor:'#F59E0B',backgroundColor:'#F59E0B20',fill:true,tension:0.3}]},options:cfg});
+    chartL=new Chart(document.getElementById('chartLaba'),{type:'line',data:{labels,datasets:[{label:'Laba',data:lArr,borderColor:'#F59E0B',backgroundColor:'#F59E0B20',fill:true,tension:0.3}]},options:cfg});
     if(chartT)chartT.destroy();
-    chartT=new Chart(document.getElementById('chartTelur'),{type:'bar',data:{labels,datasets:[{label:'Telur Super (Kg)',data:superArr,backgroundColor:'#F59E0B80',borderColor:'#F59E0B',borderWidth:1},{label:'Telur Putih (Kg)',data:putihArr,backgroundColor:'#94A3B880',borderColor:'#94A3B8',borderWidth:1}]},options:cfg});
+    chartT=new Chart(document.getElementById('chartTelur'),{type:'bar',data:{labels,datasets:[{label:'Super (Kg)',data:sArr,backgroundColor:'#F59E0B80',borderColor:'#F59E0B',borderWidth:1},{label:'Putih (Kg)',data:pArr,backgroundColor:'#94A3B880',borderColor:'#94A3B8',borderWidth:1}]},options:cfg});
 }
 
 function downloadPDF(){
@@ -496,11 +713,13 @@ function downloadPDF(){
     doc.setFontSize(11);doc.setTextColor(100);
     doc.text("Periode: "+bulanLabel,14,30);
     doc.setFontSize(10);doc.setTextColor(0);
-    doc.text("Total Omset  : "+document.getElementById('pub-masuk').textContent,14,42);
-    doc.text("Total Biaya  : "+document.getElementById('pub-keluar').textContent,14,50);
-    doc.text("Laba Bersih  : "+document.getElementById('pub-laba').textContent,14,58);
-    doc.text("Telur Super  : "+document.getElementById('pub-kg-super').textContent+" ("+document.getElementById('pub-butir-super').textContent+")",14,66);
-    doc.text("Telur Putih  : "+document.getElementById('pub-kg-putih').textContent+" ("+document.getElementById('pub-butir-putih').textContent+")",14,74);
+    doc.text("Total Omset      : "+document.getElementById('pub-masuk').textContent,14,42);
+    doc.text("Total Biaya      : "+document.getElementById('pub-keluar').textContent,14,50);
+    doc.text("Pemasukan Lain   : "+document.getElementById('pub-masuk-lain').textContent,14,58);
+    doc.text("Pengeluaran Lain : "+document.getElementById('pub-keluar-lain').textContent,14,66);
+    doc.text("Laba Bersih      : "+document.getElementById('pub-laba').textContent,14,74);
+    doc.text("Telur Super      : "+document.getElementById('pub-kg-super').textContent,14,82);
+    doc.text("Telur Putih      : "+document.getElementById('pub-kg-putih').textContent,14,90);
     const filterKdg=document.getElementById('filter-kandang').value;
     const rows=[];
     if(allDataCache){
@@ -508,16 +727,16 @@ function downloadPDF(){
             .filter(([,item])=>item.tgl&&item.tgl.startsWith(filterBln)&&(filterKdg==='semua'||!item.kandang||item.kandang===filterKdg))
             .sort((a,b)=>b[1].tgl.localeCompare(a[1].tgl))
             .forEach(([,item])=>{
-                const biaya=(item.pakan||0)+(item.gaji||0);
-                const omset=((item.kg_s||0)*(item.hrg_s||0))+((item.kg_p||0)*(item.hrg_p||0));
+                const biaya=(item.pakan||0)+(item.gaji||0)+(item.keluar_lain||0);
+                const omset=((item.kg_s||0)*(item.hrg_s||0))+((item.kg_p||0)*(item.hrg_p||0))+(item.masuk_lain||0);
                 rows.push([item.tgl.split('-').reverse().join('/'),item.kandang||'-',item.ket||'-',formatRp(biaya),formatRp(omset),formatRp(omset-biaya)]);
             });
     }
-    doc.autoTable({startY:82,head:[['Tanggal','Kandang','Keterangan','Biaya','Omset','Laba']],body:rows,styles:{fontSize:8},headStyles:{fillColor:[245,158,11],textColor:[0,0,0]},alternateRowStyles:{fillColor:[245,245,245]}});
+    doc.autoTable({startY:98,head:[['Tanggal','Kandang','Keterangan','Biaya','Omset','Laba']],body:rows,styles:{fontSize:8},headStyles:{fillColor:[245,158,11],textColor:[0,0,0]},alternateRowStyles:{fillColor:[245,245,245]}});
     doc.save(`Laporan_NajwaFarm_${filterBln}.pdf`);
 }
 
-// REALTIME LISTENERS
+// REALTIME
 db.ref('ternak_laporan').on('value',snap=>{allDataCache=snap.val()||{};loadData();});
 db.ref('settings/target_laba').on('value',snap=>{
     targetLaba=snap.val()||0;
@@ -542,17 +761,11 @@ db.ref('kesehatan').on('value',snap=>{
     const tbody=document.getElementById('kes-tabel');
     tbody.innerHTML='';
     if(data){
-        const jMap={vaksin:'💉 Vaksin',obat:'💊 Obat',sakit:'🤒 Sakit',mati:'💀 Mati'};
-        const cMap={vaksin:'kes-vaksin',obat:'kes-obat',sakit:'kes-sakit',mati:'kes-mati'};
+        const jM={vaksin:'💉 Vaksin',obat:'💊 Obat',sakit:'🤒 Sakit',mati:'💀 Mati'};
+        const cM={vaksin:'kes-vaksin',obat:'kes-obat',sakit:'kes-sakit',mati:'kes-mati'};
         Object.entries(data).sort((a,b)=>b[1].tgl.localeCompare(a[1].tgl)).forEach(([id,item])=>{
             const delBtn=is_admin?`<button class="btn-del" onclick="hapusKesehatan('${id}')">✖</button>`:'🔒';
-            tbody.innerHTML+=`<tr>
-                <td>${item.tgl}</td>
-                <td><span class="kes-badge ${cMap[item.jenis]||''}">${jMap[item.jenis]||item.jenis}</span></td>
-                <td>${item.kandang||'-'}</td>
-                <td>${item.ket||'-'}${item.jumlah>0?`<span class="sub-info">${item.jumlah} ekor</span>`:''}</td>
-                <td>${delBtn}</td>
-            </tr>`;
+            tbody.innerHTML+=`<tr><td>${item.tgl}</td><td><span class="kes-badge ${cM[item.jenis]||''}">${jM[item.jenis]||item.jenis}</span></td><td>${item.kandang||'-'}</td><td>${item.ket||'-'}${item.jumlah>0?`<span class="sub-info">${item.jumlah} ekor</span>`:''}</td><td>${delBtn}</td></tr>`;
         });
     }
 });
@@ -560,6 +773,9 @@ db.ref('kesehatan').on('value',snap=>{
 // INIT
 isiFilterBulan();
 document.getElementById('kes-tgl').valueAsDate=new Date();
+document.getElementById('cari-tgl-telur').valueAsDate=new Date();
+document.getElementById('cari-tgl-harga').valueAsDate=new Date();
+document.getElementById('cari-tgl-lain').valueAsDate=new Date();
 </script>
 </body>
 </html>
