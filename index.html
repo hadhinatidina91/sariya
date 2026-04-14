@@ -3,367 +3,358 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Najwafarm Pro - Dashboard Keluarga</title>
-    
+    <title>Najwafarm - Pro Laporan</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
-        :root { 
-            --primary: #F59E0B; --bg: #0F172A; --card: #1E293B; 
-            --text: #F1F5F9; --green: #10B981; --red: #EF4444; 
+        :root{--primary:#F59E0B;--bg:#0F172A;--card:#1E293B;--text:#F1F5F9;--green:#10B981;--red:#EF4444;--blue:#3B82F6;--border:#334155;}
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;}
+
+        /* TABS */
+        .tabs{display:flex;background:#1E293B;border-bottom:2px solid var(--border);overflow-x:auto;position:sticky;top:0;z-index:100;}
+        .tab-btn{flex:1;padding:13px 4px;background:none;border:none;color:#94A3B8;cursor:pointer;font-size:10px;font-weight:bold;white-space:nowrap;min-width:55px;}
+        .tab-btn.active{color:var(--primary);border-bottom:3px solid var(--primary);}
+        .tab-content{display:none;padding:15px;padding-bottom:90px;}
+        .tab-content.active{display:block;}
+
+        /* FAB */
+        .fab{position:fixed;bottom:20px;right:20px;background:var(--primary);color:#0F172A;border:none;padding:15px 22px;border-radius:50px;cursor:pointer;z-index:500;font-size:13px;font-weight:bold;box-shadow:0 4px 20px rgba(0,0,0,0.4);}
+
+        /* MODAL */
+        .modal{display:none;position:fixed;inset:0;background:rgba(10,15,30,0.97);z-index:1000;overflow-y:auto;padding:15px;}
+        .modal-box{max-width:500px;margin:10px auto;background:var(--card);padding:22px;border-radius:16px;border:1px solid var(--primary);}
+        .modal-title{color:var(--primary);font-size:16px;font-weight:bold;margin-bottom:16px;}
+        .modal-close{float:right;background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;font-weight:bold;}
+
+        /* FORMS */
+        .form-label{font-size:11px;color:#94A3B8;font-weight:bold;display:block;margin-top:14px;margin-bottom:4px;}
+        .form-input{width:100%;padding:11px 13px;border-radius:8px;border:1px solid #475569;background:#0F172A;color:white;font-size:13px;}
+        .form-select{width:100%;padding:11px 13px;border-radius:8px;border:1px solid #475569;background:#0F172A;color:white;font-size:13px;}
+        .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+        .section-divider{font-size:11px;font-weight:bold;padding:8px 0 4px 0;border-bottom:1px solid var(--border);margin-top:16px;}
+        .btn-primary{background:var(--primary);border:none;padding:14px;width:100%;border-radius:10px;font-weight:bold;margin-top:18px;cursor:pointer;color:#0F172A;font-size:14px;}
+        .btn-secondary{background:#334155;border:none;padding:12px;width:100%;border-radius:10px;font-weight:bold;margin-top:8px;cursor:pointer;color:white;font-size:13px;}
+        .btn-danger{background:var(--red);border:none;padding:12px;width:100%;border-radius:10px;font-weight:bold;margin-top:8px;cursor:pointer;color:white;font-size:13px;}
+
+        /* DASHBOARD */
+        .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+        .dash-card{background:var(--card);padding:14px;border-radius:12px;border:1px solid var(--border);}
+        .dash-card.full{grid-column:span 2;}
+        .dash-card.gold{border-color:var(--primary);}
+        .dash-card.green{border-color:var(--green);}
+        .dash-card.red{border-color:var(--red);}
+        .dash-card h4{font-size:10px;color:#94A3B8;text-transform:uppercase;margin-bottom:6px;}
+        .dash-val{font-size:1.15rem;font-weight:bold;}
+        .dash-sub{font-size:11px;color:#94A3B8;margin-top:3px;}
+
+        /* CEK HARGA PANEL */
+        .cek-panel{background:var(--card);border-radius:12px;padding:14px;border:1px solid var(--primary);margin-bottom:16px;}
+        .cek-panel h4{font-size:11px;color:var(--primary);text-transform:uppercase;margin-bottom:10px;}
+        .cek-row{display:flex;gap:8px;}
+        .cek-row input{flex:1;padding:10px;border-radius:8px;border:1px solid #475569;background:#0F172A;color:white;font-size:13px;}
+        .btn-cek{background:var(--primary);border:none;padding:10px 16px;border-radius:8px;color:#0F172A;font-weight:bold;cursor:pointer;font-size:13px;}
+        .cek-result{display:none;margin-top:12px;}
+        .cek-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+        .cek-item{background:#0F172A;border-radius:8px;padding:10px;border:1px solid var(--border);}
+        .cek-item small{font-size:10px;color:#94A3B8;display:block;margin-bottom:3px;}
+        .cek-item b{font-size:14px;}
+        .cek-item.full{grid-column:span 2;text-align:center;border-color:var(--primary);}
+        .cek-empty{color:#94A3B8;font-size:12px;text-align:center;padding:10px;display:none;}
+
+        /* TABLE */
+        .tbl-wrap{background:var(--card);border-radius:12px;overflow-x:auto;border:1px solid var(--border);}
+        table{width:100%;border-collapse:collapse;font-size:0.74rem;min-width:420px;}
+        th{background:#334155;padding:11px 10px;color:#94A3B8;text-align:left;font-size:10px;}
+        td{padding:10px 9px;border-bottom:1px solid #0F172A;vertical-align:top;}
+        .sub{font-size:0.67rem;color:#94A3B8;display:block;margin-top:2px;}
+        .ket{color:var(--primary);font-style:italic;font-size:0.73rem;display:block;margin-top:2px;}
+        .txt-g{color:var(--green);}.txt-r{color:var(--red);}
+        .badge{font-size:9px;padding:2px 5px;border-radius:4px;background:#334155;color:#F1F5F9;}
+
+        /* FILTER */
+        .filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+        .filter-bar select{flex:1;min-width:100px;padding:9px;border-radius:8px;border:1px solid #475569;background:#1E293B;color:white;font-size:12px;}
+        .btn-pdf{background:var(--red);border:none;padding:9px 13px;border-radius:8px;color:white;font-weight:bold;cursor:pointer;font-size:12px;}
+        .btn-cetak{background:var(--blue);border:none;padding:9px 13px;border-radius:8px;color:white;font-weight:bold;cursor:pointer;font-size:12px;}
+
+        /* ACTION BUTTONS IN TABLE */
+        .act-edit{background:none;border:1px solid var(--blue);color:var(--blue);padding:4px 8px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:bold;}
+        .act-del{background:none;border:1px solid var(--red);color:var(--red);padding:4px 8px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:bold;margin-top:4px;}
+
+        /* KANDANG MANAGEMENT */
+        .kandang-item{display:flex;justify-content:space-between;align-items:center;background:#0F172A;padding:12px;border-radius:8px;margin-bottom:8px;border:1px solid var(--border);}
+        .kandang-item span{font-size:14px;}
+        .btn-hapus-kandang{background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;}
+
+        /* ADMIN PANEL */
+        .admin-info{background:#1E293B;border-radius:8px;padding:10px;margin-bottom:14px;font-size:12px;color:#94A3B8;border-left:3px solid var(--primary);}
+
+        /* PRINT */
+        @media print{
+            .tabs,.fab,.filter-bar,.btn-pdf,.btn-cetak,.act-edit,.act-del,.cek-panel,.admin-info{display:none!important;}
+            .tab-content{display:block!important;padding:5px!important;}
+            #tab-cari,#tab-kandang,#tab-kesehatan{display:none!important;}
+            body{background:white!important;color:black!important;}
+            .dash-card{background:#f9f9f9!important;border:1px solid #ccc!important;}
+            .dash-val{color:black!important;}
+            .txt-g{color:green!important;}.txt-r{color:red!important;}
+            table{min-width:unset!important;font-size:9px!important;}
+            th{background:#eee!important;color:#333!important;}
+            .tbl-wrap{overflow:visible!important;}
+            .print-head{display:block!important;}
         }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; overflow-x: hidden; }
-        
-        .main-display { width: 100%; max-width: 1000px; margin: 0 auto; padding: 20px 15px; box-sizing: border-box; padding-bottom: 100px; }
-        h1 { color: var(--primary); font-size: 1.8rem; margin: 0; }
-        
-        .section-title { font-size: 12px; color: #94A3B8; margin: 25px 0 10px 0; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
-
-        .dashboard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
-        .stat-box { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid #334155; }
-        .stat-box h4 { margin: 0; font-size: 0.7rem; color: #94A3B8; text-transform: uppercase; }
-        .val { font-size: 1.2rem; font-weight: bold; display: block; margin-top: 5px; }
-        .full-width { grid-column: span 2; border: 2px solid var(--primary); }
-
-        .search-box { background: #1e293b; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--primary); }
-        .search-result { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #475569; }
-        .res-item { background: rgba(15, 23, 42, 0.5); padding: 10px; border-radius: 8px; }
-        .res-item small { color: #94A3B8; font-size: 10px; text-transform: uppercase; }
-        .res-item b { display: block; font-size: 14px; margin-top: 2px; }
-
-        .filter-box { background: #1e293b; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155; }
-        .filter-group { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
-        .filter-group div { flex: 1; min-width: 120px; }
-        
-        .admin-trigger { 
-            position: fixed; bottom: 20px; right: 20px; 
-            background: var(--primary); color: #0F172A; 
-            border: none; padding: 15px 25px; 
-            border-radius: 50px; cursor: pointer; z-index: 1000; 
-            font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-
-        .admin-panel { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.98); z-index: 2000; padding: 15px; overflow-y: auto; }
-        .panel-content { max-width: 500px; margin: 10px auto; background: var(--card); padding: 25px; border-radius: 15px; }
-
-        .table-container { background: var(--card); border-radius: 12px; overflow-x: auto; border: 1px solid #334155; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 550px; }
-        th { background: #334155; padding: 12px; color: #94A3B8; text-align: left; }
-        td { padding: 15px 12px; border-bottom: 1px solid #0F172A; vertical-align: top; }
-        
-        .txt-red { color: var(--red); }
-        .txt-green { color: var(--green); }
-        input { width: 100%; padding: 10px; margin-top: 5px; border-radius: 8px; border: 1px solid #475569; background: #0F172A; color: white; box-sizing: border-box; }
-        .btn-action { background: var(--primary); border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; color: #0F172A; }
-        .btn-edit { background: #334155; color: var(--primary); border: 1px solid var(--primary); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; margin-right: 5px; }
-        .btn-delete { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; }
+        .print-head{display:none;text-align:center;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid #d97706;}
     </style>
 </head>
 <body>
 
-    <button id="main-btn-trigger" class="admin-trigger" onclick="aksesPanel()">🔒 LOGIN ADMIN</button>
+<!-- FAB -->
+<button class="fab" onclick="bukaInputBaru()">＋ DATA BARU</button>
 
-    <div id="adminPanel" class="admin-panel">
-        <div class="panel-content">
-            <button style="float:right; color:var(--red); background:none; border:none; font-weight:bold; cursor:pointer;" onclick="toggleAdmin()">BATAL</button>
-            <h3 id="panel-title" style="color: var(--primary); margin-top: 0;">Input Transaksi</h3>
-            
-            <input type="hidden" id="edit-id"> 
-            
-            <label>Tanggal</label>
-            <input type="date" id="tgl">
-            <label>Keterangan Tambahan</label>
-            <input type="text" id="ket" placeholder="Misal: Jual karung & beli vitamin">
+<!-- ===================== MODAL: INPUT / EDIT ===================== -->
+<div id="m-input" class="modal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="tutup('m-input')">✕</button>
+        <div class="modal-title" id="m-input-title">Input Transaksi</div>
+        <input type="hidden" id="edit-id">
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
-                <div style="grid-column: span 2; color: var(--red); font-size: 11px; border-bottom: 1px solid #334155;">📉 PENGELUARAN</div>
-                <div><label>Pakan (Rp)</label><input type="text" id="pakan" placeholder="0"></div>
-                <div><label>Gaji (Rp)</label><input type="text" id="gaji" placeholder="0"></div>
-                <div style="grid-column: span 2;"><label>Biaya Lain-lain (Rp)</label><input type="text" id="biaya_lain" placeholder="0"></div>
+        <span class="form-label">Tanggal</span>
+        <input class="form-input" type="date" id="tgl">
 
-                <div style="grid-column: span 2; color: var(--primary); font-size: 11px; border-bottom: 1px solid #334155; margin-top: 10px;">🥚 PRODUKSI TELUR</div>
-                <div><label>Super (Kg)</label><input type="number" step="0.01" id="kg_s" placeholder="0"></div>
-                <div><label>Harga Super /Kg</label><input type="text" id="hrg_s" placeholder="0"></div>
-                <div><label>Putih (Kg)</label><input type="number" step="0.01" id="kg_p" placeholder="0"></div>
-                <div><label>Harga Putih /Kg</label><input type="text" id="hrg_p" placeholder="0"></div>
+        <span class="form-label">Kandang</span>
+        <select class="form-select" id="kandang-select"></select>
 
-                <div style="grid-column: span 2; color: var(--green); font-size: 11px; border-bottom: 1px solid #334155; margin-top: 10px;">💰 PEMASUKAN LAIN</div>
-                <div style="grid-column: span 2;"><label>Nominal Pemasukan Lain (Rp)</label><input type="text" id="masuk_lain" placeholder="0"></div>
-            </div>
+        <span class="form-label">Keterangan</span>
+        <input class="form-input" type="text" id="ket" placeholder="Misal: Pakan Toko Maju / Gaji Budi">
 
-            <button id="btn-save" class="btn-action" style="width: 100%; margin-top: 25px; padding: 15px;" onclick="simpanData()">SIMPAN DATA</button>
+        <!-- PENGELUARAN -->
+        <div class="section-divider" style="color:var(--red)">📉 PENGELUARAN</div>
+        <div class="form-grid">
+            <div><span class="form-label">Pakan (Rp)</span><input class="form-input" type="text" id="pakan" placeholder="0"></div>
+            <div><span class="form-label">Gaji (Rp)</span><input class="form-input" type="text" id="gaji" placeholder="0"></div>
+        </div>
+        <span class="form-label">Pengeluaran Lain (Rp)</span>
+        <input class="form-input" type="text" id="keluar_lain" placeholder="Listrik, bensin, obat, dll">
+        <span class="form-label">Keterangan Pengeluaran Lain</span>
+        <input class="form-input" type="text" id="keluar_lain_ket" placeholder="Misal: Bayar listrik kandang">
+
+        <!-- TELUR SUPER -->
+        <div class="section-divider" style="color:var(--primary)">🥚 TELUR SUPER</div>
+        <div class="form-grid">
+            <div><span class="form-label">Jumlah (Kg)</span><input class="form-input" type="number" step="0.01" id="kg_s" placeholder="0"></div>
+            <div><span class="form-label">Harga /Kg (Rp)</span><input class="form-input" type="text" id="hrg_s" placeholder="0"></div>
+        </div>
+
+        <!-- TELUR PUTIH -->
+        <div class="section-divider" style="color:#CBD5E1">🥚 TELUR PUTIH</div>
+        <div class="form-grid">
+            <div><span class="form-label">Jumlah (Kg)</span><input class="form-input" type="number" step="0.01" id="kg_p" placeholder="0"></div>
+            <div><span class="form-label">Harga /Kg (Rp)</span><input class="form-input" type="text" id="hrg_p" placeholder="0"></div>
+        </div>
+
+        <!-- PEMASUKAN LAIN -->
+        <div class="section-divider" style="color:var(--green)">💰 PEMASUKAN LAIN</div>
+        <span class="form-label">Nominal (Rp)</span>
+        <input class="form-input" type="text" id="masuk_lain" placeholder="Jual ayam afkir, pupuk, dll">
+        <span class="form-label">Keterangan Pemasukan Lain</span>
+        <input class="form-input" type="text" id="masuk_lain_ket" placeholder="Misal: Jual ayam afkir 10 ekor">
+
+        <button class="btn-primary" onclick="simpanData()">💾 SIMPAN</button>
+        <button class="btn-secondary" onclick="tutup('m-input')">BATAL</button>
+    </div>
+</div>
+
+<!-- ===================== MODAL: KANDANG ===================== -->
+<div id="m-kandang" class="modal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="tutup('m-kandang')">✕</button>
+        <div class="modal-title">🏠 Kelola Kandang</div>
+        <div id="kandang-list"></div>
+        <div class="section-divider" style="color:var(--green);margin-top:16px">+ Tambah Kandang Baru</div>
+        <span class="form-label">Nama Kandang</span>
+        <input class="form-input" type="text" id="nama-kandang-baru" placeholder="Misal: Kandang 4 / Kandang Barat">
+        <button class="btn-primary" onclick="tambahKandang()">+ TAMBAH KANDANG</button>
+    </div>
+</div>
+
+<!-- ===================== MODAL: PIN ADMIN ===================== -->
+<div id="m-pin" class="modal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="tutup('m-pin')">✕</button>
+        <div class="modal-title">🔐 Login Admin</div>
+        <span class="form-label">Masukkan PIN</span>
+        <input class="form-input" type="password" id="pin-input" placeholder="••••" onkeydown="if(event.key==='Enter')cekPin()">
+        <button class="btn-primary" onclick="cekPin()">MASUK</button>
+    </div>
+</div>
+
+<!-- ===================== MODAL: KONFIRMASI HAPUS ===================== -->
+<div id="m-hapus" class="modal">
+    <div class="modal-box">
+        <div class="modal-title" style="color:var(--red)">⚠️ Hapus Data</div>
+        <p style="color:#94A3B8;font-size:13px;margin:10px 0 20px 0">Data yang dihapus tidak bisa dikembalikan. Yakin ingin menghapus?</p>
+        <input type="hidden" id="hapus-id">
+        <button class="btn-danger" onclick="konfirmasiHapus()">YA, HAPUS</button>
+        <button class="btn-secondary" onclick="tutup('m-hapus')">BATAL</button>
+    </div>
+</div>
+
+<!-- ===================== HEADER ===================== -->
+<div style="padding:18px 15px 10px;background:var(--card);border-bottom:1px solid var(--border);">
+    <h1 style="color:var(--primary);font-size:1.6rem">Najwafarm 🐔</h1>
+    <div id="bulan-label" style="font-size:11px;color:#94A3B8;text-transform:uppercase;margin-top:2px"></div>
+</div>
+
+<!-- ===================== TABS ===================== -->
+<div class="tabs">
+    <button class="tab-btn active" onclick="gotoTab('beranda',this)">🏠 Beranda</button>
+    <button class="tab-btn" onclick="gotoTab('laporan',this)">📊 Laporan</button>
+    <button class="tab-btn" onclick="gotoTab('cari',this)">🔍 Cari</button>
+    <button class="tab-btn" onclick="gotoTab('kandang',this)">🏠 Kandang</button>
+    <button class="tab-btn" onclick="gotoTab('kesehatan',this)">🐔 Sehat</button>
+</div>
+
+<!-- ===================== TAB BERANDA ===================== -->
+<div id="tab-beranda" class="tab-content active">
+
+    <!-- RINGKASAN UTAMA -->
+    <div class="dash-grid">
+        <div class="dash-card full gold">
+            <h4>💰 Saldo / Laba Bersih Bulan Ini</h4>
+            <div id="b-laba" class="dash-val">Rp 0</div>
+        </div>
+        <div class="dash-card green">
+            <h4>📈 Total Pemasukan</h4>
+            <div id="b-masuk" class="dash-val txt-g">Rp 0</div>
+        </div>
+        <div class="dash-card red">
+            <h4>📉 Total Pengeluaran</h4>
+            <div id="b-keluar" class="dash-val txt-r">Rp 0</div>
         </div>
     </div>
 
-    <div class="main-display">
-        <h1>Najwafarm 🐔</h1>
-        <p style="color: #94A3B8; margin-bottom: 20px; font-size: 14px;">Laporan Keuangan & Produksi</p>
-
-        <div class="section-title">Ringkasan Saldo Global</div>
-        <div class="dashboard-grid">
-            <div class="stat-box full-width">
-                <h4>Saldo Keuntungan Bersih</h4>
-                <span id="saldo-global" class="val">Rp 0</span>
-            </div>
-            <div class="stat-box">
-                <h4>Total Pengeluaran</h4>
-                <span id="total-keluar-global" class="val txt-red">Rp 0</span>
-            </div>
-            <div class="stat-box">
-                <h4>Total Pemasukan</h4>
-                <span id="total-masuk-global" class="val txt-green">Rp 0</span>
-            </div>
+    <!-- CEK HARGA TELUR -->
+    <div class="cek-panel">
+        <h4>🔍 Cek Harga & Jumlah Telur</h4>
+        <div class="cek-row">
+            <input type="date" id="cek-tgl">
+            <button class="btn-cek" onclick="cekTelur()">CEK</button>
         </div>
-
-        <div class="section-title">Cek Produksi & Harga Telur</div>
-        <div class="search-box">
-            <label style="font-size: 11px; color: #94A3B8;">Pilih Tanggal Untuk Melihat Detail</label>
-            <div style="display: flex; gap: 10px; margin-top: 5px;">
-                <input type="date" id="search-date">
-                <button class="btn-action" onclick="cariData()">CEK DATA</button>
-            </div>
-            
-            <div id="search-result-area" style="display:none;">
-                <div class="search-result">
-                    <div class="res-item">
-                        <small>Harga Super</small>
-                        <b id="res-hrg-s" class="txt-green">Rp 0</b>
-                        <small style="margin-top:5px; display:block">Berat: <span id="res-kg-s">0</span> Kg</small>
-                    </div>
-                    <div class="res-item">
-                        <small>Harga Putih</small>
-                        <b id="res-hrg-p" class="txt-green">Rp 0</b>
-                        <small style="margin-top:5px; display:block">Berat: <span id="res-kg-p">0</span> Kg</small>
-                    </div>
-                    <div class="res-item" style="grid-column: span 2; text-align: center; background: var(--primary); color: #0F172A;">
-                        <small style="color: #0F172A; font-weight: bold;">Total Produksi Hari Ini</small>
-                        <b id="res-total-kg" style="font-size: 18px;">0 Kg</b>
-                    </div>
+        <div id="cek-result" class="cek-result">
+            <div class="cek-grid">
+                <div class="cek-item">
+                    <small>🥚 Harga Super /Kg</small>
+                    <b id="c-hrg-s" class="txt-g">Rp 0</b>
+                </div>
+                <div class="cek-item">
+                    <small>🥚 Harga Putih /Kg</small>
+                    <b id="c-hrg-p">Rp 0</b>
+                </div>
+                <div class="cek-item">
+                    <small>Telur Super</small>
+                    <b id="c-kg-s" class="txt-g">0 Kg</b>
+                    <span id="c-butir-s" style="font-size:11px;color:#94A3B8">≈ 0 butir</span>
+                </div>
+                <div class="cek-item">
+                    <small>Telur Putih</small>
+                    <b id="c-kg-p">0 Kg</b>
+                    <span id="c-butir-p" style="font-size:11px;color:#94A3B8">≈ 0 butir</span>
+                </div>
+                <div class="cek-item full">
+                    <small>Total Produksi Hari Ini</small>
+                    <b id="c-total-kg" style="color:var(--primary)">0 Kg</b>
                 </div>
             </div>
         </div>
+        <div id="cek-empty" class="cek-empty">Tidak ada data untuk tanggal ini</div>
+    </div>
 
-        <div class="section-title">Tabel Laporan Berkala</div>
-        <div class="filter-box">
-            <div class="filter-group">
-                <div><label>Dari</label><input type="date" id="f-mulai"></div>
-                <div><label>Sampai</label><input type="date" id="f-selesai"></div>
-                <button class="btn-action" onclick="muatData()">FILTER</button>
-            </div>
+    <!-- RINGKASAN PER KANDANG -->
+    <div style="font-size:11px;color:#94A3B8;text-transform:uppercase;margin-bottom:8px;font-weight:bold">Ringkasan Per Kandang</div>
+    <div id="kandang-summary"></div>
+</div>
+
+<!-- ===================== TAB LAPORAN ===================== -->
+<div id="tab-laporan" class="tab-content">
+
+    <!-- Print Header (only shows when printing) -->
+    <div class="print-head">
+        <h2 style="color:#d97706">🐔 NAJWAFARM</h2>
+        <p id="print-periode" style="font-size:13px;margin:4px 0">Laporan Keuangan</p>
+        <p id="print-tgl" style="font-size:11px;color:#555"></p>
+    </div>
+
+    <div class="admin-info" id="admin-info-bar">
+        🔒 Login sebagai admin untuk bisa edit & hapus data.
+        <span style="color:var(--primary);cursor:pointer;font-weight:bold" onclick="mintaAdmin()"> Login Admin →</span>
+    </div>
+
+    <div class="filter-bar">
+        <select id="f-bulan" onchange="loadLaporan()"></select>
+        <select id="f-kandang" onchange="loadLaporan()">
+            <option value="semua">Semua Kandang</option>
+        </select>
+        <button class="btn-pdf" onclick="unduhPDF()">📄 PDF</button>
+        <button class="btn-cetak" onclick="cetakHalaman()">🖨️</button>
+    </div>
+
+    <div class="dash-grid">
+        <div class="dash-card green">
+            <h4>Total Pemasukan</h4>
+            <div id="l-masuk" class="dash-val txt-g">Rp 0</div>
         </div>
-
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Tgl / Ket</th>
-                        <th>Biaya Total</th>
-                        <th>Omset & Laba</th>
-                        <th>Opsi</th>
-                    </tr>
-                </thead>
-                <tbody id="tabel-body"></tbody>
-            </table>
+        <div class="dash-card red">
+            <h4>Total Pengeluaran</h4>
+            <div id="l-keluar" class="dash-val txt-r">Rp 0</div>
+        </div>
+        <div class="dash-card" style="border-color:var(--primary)">
+            <h4>🥚 Telur Super</h4>
+            <div id="l-kg-s" class="dash-val txt-g">0 Kg</div>
+            <div id="l-butir-s" class="dash-sub">≈ 0 butir</div>
+        </div>
+        <div class="dash-card">
+            <h4>🥚 Telur Putih</h4>
+            <div id="l-kg-p" class="dash-val">0 Kg</div>
+            <div id="l-butir-p" class="dash-sub">≈ 0 butir</div>
+        </div>
+        <div class="dash-card full gold">
+            <h4>💰 Laba Bersih</h4>
+            <div id="l-laba" class="dash-val">Rp 0</div>
         </div>
     </div>
 
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDbwSAS7uZ-TVZlSn97WP9sNU3JXYQeMvA",
-        authDomain: "najwafarm-dd1be.firebaseapp.com",
-        databaseURL: "https://najwafarm-dd1be-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "najwafarm-dd1be",
-        storageBucket: "najwafarm-dd1be.appspot.com",
-        messagingSenderId: "1033743274448",
-        appId: "1:1033743274448:web:6ad64eff21baaadc5369d5"
-    };
+    <div class="tbl-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Tgl / Keterangan</th>
+                    <th>Pengeluaran</th>
+                    <th>Pemasukan & Laba</th>
+                    <th id="th-opsi" style="display:none">Opsi</th>
+                </tr>
+            </thead>
+            <tbody id="tbl-body"></tbody>
+        </table>
+    </div>
+</div>
 
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-    let is_admin = false;
-    let globalDataSnapshot = null;
+<!-- ===================== TAB CARI ===================== -->
+<div id="tab-cari" class="tab-content">
 
-    // Inisialisasi Tanggal
-    const now = new Date();
-    document.getElementById('f-mulai').value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    document.getElementById('f-selesai').value = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-    document.getElementById('tgl').valueAsDate = now;
-    document.getElementById('search-date').valueAsDate = now;
-
-    function formatRp(n) { return "Rp " + Math.abs(Number(n)).toLocaleString('id-ID'); }
-    function bersihAngka(str) { 
-        if(typeof str === 'number') return str;
-        return parseFloat(str.replace(/\./g, '')) || 0; 
-    }
-
-    // Input Auto Formatting Rupiah
-    const inputUang = ['pakan', 'gaji', 'biaya_lain', 'hrg_s', 'hrg_p', 'masuk_lain'];
-    inputUang.forEach(id => {
-        document.getElementById(id).addEventListener('keyup', function() {
-            let val = this.value.replace(/[^0-9]/g, '');
-            this.value = val ? Number(val).toLocaleString('id-ID') : '';
-        });
-    });
-
-    function aksesPanel() {
-        if (is_admin) { 
-            resetForm(); 
-            toggleAdmin(); 
-        } else {
-            if (prompt("Masukkan PIN Admin:") === "9999") { 
-                is_admin = true; 
-                document.getElementById('main-btn-trigger').textContent = "+ DATA BARU";
-                muatData(); 
-                toggleAdmin(); 
-            } else {
-                alert("PIN Salah!");
-            }
-        }
-    }
-
-    function toggleAdmin() {
-        const p = document.getElementById('adminPanel');
-        p.style.display = p.style.display === 'block' ? 'none' : 'block';
-    }
-
-    function resetForm() {
-        document.getElementById('edit-id').value = "";
-        document.getElementById('panel-title').textContent = "Input Transaksi Baru";
-        document.getElementById('btn-save').textContent = "SIMPAN DATA";
-        document.getElementById('ket').value = "";
-        inputUang.forEach(id => document.getElementById(id).value = "");
-        document.getElementById('kg_s').value = "";
-        document.getElementById('kg_p').value = "";
-        document.getElementById('tgl').valueAsDate = new Date();
-    }
-
-    function prepareEdit(id) {
-        const data = globalDataSnapshot[id];
-        document.getElementById('edit-id').value = id;
-        document.getElementById('panel-title').textContent = "Edit Data Transaksi";
-        document.getElementById('btn-save').textContent = "UPDATE DATA";
-        
-        document.getElementById('tgl').value = data.tgl;
-        document.getElementById('ket').value = data.ket || "";
-        document.getElementById('pakan').value = (data.pakan || 0).toLocaleString('id-ID');
-        document.getElementById('gaji').value = (data.gaji || 0).toLocaleString('id-ID');
-        document.getElementById('biaya_lain').value = (data.biaya_lain || 0).toLocaleString('id-ID');
-        document.getElementById('kg_s').value = data.kg_s || 0;
-        document.getElementById('hrg_s').value = (data.hrg_s || 0).toLocaleString('id-ID');
-        document.getElementById('kg_p').value = data.kg_p || 0;
-        document.getElementById('hrg_p').value = (data.hrg_p || 0).toLocaleString('id-ID');
-        document.getElementById('masuk_lain').value = (data.masuk_lain || 0).toLocaleString('id-ID');
-        
-        toggleAdmin();
-    }
-
-    function hapusData(id) {
-        if (confirm("Hapus data ini secara permanen?")) {
-            database.ref('ternak_laporan/' + id).remove()
-                .then(() => alert("Data berhasil dihapus!"))
-                .catch(e => alert("Gagal: " + e.message));
-        }
-    }
-
-    function simpanData() {
-        const tgl = document.getElementById('tgl').value;
-        const id = document.getElementById('edit-id').value;
-        if(!tgl) return alert("Pilih tanggal!");
-
-        const payload = {
-            tgl: tgl,
-            ket: document.getElementById('ket').value || "Tanpa Keterangan",
-            pakan: bersihAngka(document.getElementById('pakan').value),
-            gaji: bersihAngka(document.getElementById('gaji').value),
-            biaya_lain: bersihAngka(document.getElementById('biaya_lain').value),
-            kg_s: parseFloat(document.getElementById('kg_s').value) || 0,
-            hrg_s: bersihAngka(document.getElementById('hrg_s').value),
-            kg_p: parseFloat(document.getElementById('kg_p').value) || 0,
-            hrg_p: bersihAngka(document.getElementById('hrg_p').value),
-            masuk_lain: bersihAngka(document.getElementById('masuk_lain').value)
-        };
-
-        const ref = id ? database.ref('ternak_laporan/' + id) : database.ref('ternak_laporan').push();
-        ref.set(payload).then(() => {
-            alert(id ? "Data Diperbarui!" : "Data Tersimpan!");
-            toggleAdmin(); 
-            resetForm();
-        });
-    }
-
-    function cariData() {
-        const targetDate = document.getElementById('search-date').value;
-        if(!globalDataSnapshot) return;
-        let kgS = 0, kgP = 0, hrgS = 0, hrgP = 0, found = false;
-        Object.values(globalDataSnapshot).forEach(item => {
-            if(item.tgl === targetDate) {
-                kgS += (item.kg_s || 0); kgP += (item.kg_p || 0);
-                if(item.hrg_s > 0) hrgS = item.hrg_s;
-                if(item.hrg_p > 0) hrgP = item.hrg_p;
-                found = true;
-            }
-        });
-        document.getElementById('search-result-area').style.display = 'block';
-        document.getElementById('res-hrg-s').textContent = formatRp(hrgS);
-        document.getElementById('res-hrg-p').textContent = formatRp(hrgP);
-        document.getElementById('res-kg-s').textContent = kgS.toFixed(2);
-        document.getElementById('res-kg-p').textContent = kgP.toFixed(2);
-        document.getElementById('res-total-kg').textContent = (kgS + kgP).toFixed(2) + " Kg";
-        if(!found) alert("Tidak ada data pada tanggal tersebut.");
-    }
-
-    function muatData() {
-        const tglMulai = document.getElementById('f-mulai').value;
-        const tglSelesai = document.getElementById('f-selesai').value;
-
-        database.ref('ternak_laporan').on('value', (snapshot) => {
-            globalDataSnapshot = snapshot.val();
-            const tbody = document.getElementById('tabel-body');
-            tbody.innerHTML = "";
-            let sGlobal = 0, tMasukGlobal = 0, tKeluarGlobal = 0;
-
-            if (globalDataSnapshot) {
-                const sorted = Object.entries(globalDataSnapshot).sort((a, b) => b[1].tgl.localeCompare(a[1].tgl));
-                sorted.forEach(([id, item]) => {
-                    const biaya = (item.pakan || 0) + (item.gaji || 0) + (item.biaya_lain || 0);
-                    const omset = ((item.kg_s || 0) * (item.hrg_s || 0)) + ((item.kg_p || 0) * (item.hrg_p || 0)) + (item.masuk_lain || 0);
-                    const laba = omset - biaya;
-                    
-                    sGlobal += laba; 
-                    tMasukGlobal += omset; 
-                    tKeluarGlobal += biaya;
-
-                    if (item.tgl >= tglMulai && item.tgl <= tglSelesai) {
-                        tbody.innerHTML += `
-                            <tr>
-                                <td><b>${item.tgl.split('-').reverse().join('/')}</b><br><small>${item.ket}</small></td>
-                                <td><span class="txt-red">${formatRp(biaya)}</span></td>
-                                <td>
-                                    <span class="txt-green">${formatRp(omset)}</span><br>
-                                    <small style="color:${laba >= 0 ? 'var(--green)' : 'var(--red)'}">Laba: ${formatRp(laba)}</small>
-                                </td>
-                                <td>
-                                    ${is_admin ? `
-                                        <div style="display:flex; flex-direction:column; gap:5px;">
-                                            <button class="btn-edit" onclick="prepareEdit('${id}')">✏️ EDIT</button>
-                                            <button class="btn-delete" onclick="hapusData('${id}')">🗑️ HAPUS</button>
-                                        </div>
-                                    ` : '🔒'}
-                                </td>
-                            </tr>
-                        `;
-                    }
-                });
-            }
-            document.getElementById('saldo-global').textContent = formatRp(sGlobal);
-            document.getElementById('saldo-global').className = 'val ' + (sGlobal >= 0 ? 'txt-green' : 'txt-red');
-            document.getElementById('total-keluar-global').textContent = formatRp(tKeluarGlobal);
-            document.getElementById('total-masuk-global').textContent = formatRp(tMasukGlobal);
-        });
-    }
-
-    muatData();
-</script>
-</body>
-</html>
+    <!-- Cari Penjualan Telur -->
+    <div class="cek-panel" style="margin-bottom:16px">
+        <h4>🥚 Cari Penjualan Telur Per Tanggal</h4>
+        <div class="cek-row">
+            <input type="date" id="cari-tgl-telur">
+            <button class="btn-cek" onclick="cariTelur()">CEK</button>
+        </div>
+        <div id="result-telur" class="cek-result">
+            <div class="cek-grid">
+                <div class="cek-item"><small>🥚 Telur Super</small><b id="ct-kg-s" class="txt-g">0 Kg</b><span id="ct-butir-s" style="font-size:11px;color:#94A3B8">≈ 0 butir</span></div>
+                <div class="cek-item"><small>🥚 Telur Putih</small><b id="ct-kg-p">0 Kg</b><span id="ct-butir-p" style="font-size:11px;color:#94A3B8">≈ 0 butir</span></div>
+                <div class="cek-item full"><small>Total Produksi</small><b id="ct-total" style="color:var(--primary)">0 Kg</b></div>
+                <div class="cek-item"><small>💰 Omset Telur</small><b id="ct-omset" class="txt-g">Rp 0</b></div>
+                <div class="cek-item"><small>📉 Total Biaya</small><b id="ct-biaya" class="txt-r">Rp 0</b></
